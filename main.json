@@ -1,0 +1,69 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.23.1.45101",
+      "templateHash": "7373711200420932890"
+    }
+  },
+  "parameters": {
+    "vnetName": {
+      "type": "object"
+    },
+    "testsubnets": {
+      "type": "object"
+    },
+    "accsubnets": {
+      "type": "object"
+    }
+  },
+  "resources": [
+    {
+      "copy": {
+        "name": "vnet",
+        "count": "[length(items(parameters('vnetName')))]"
+      },
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2021-02-01",
+      "name": "[items(parameters('vnetName'))[copyIndex()].value.name]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": "[items(parameters('vnetName'))[copyIndex()].value.addressPrefixes]"
+        }
+      }
+    },
+    {
+      "copy": {
+        "name": "testsubnet",
+        "count": "[length(items(parameters('testsubnets')))]"
+      },
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', items(parameters('vnetName'))[0].value.name, items(parameters('testsubnets'))[copyIndex()].value.name)]",
+      "properties": {
+        "addressPrefix": "[items(parameters('testsubnets'))[copyIndex()].value.subnetPrefix]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', items(parameters('vnetName'))[0].value.name)]"
+      ]
+    },
+    {
+      "copy": {
+        "name": "accsubnet",
+        "count": "[length(items(parameters('accsubnets')))]"
+      },
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', items(parameters('vnetName'))[1].value.name, items(parameters('accsubnets'))[copyIndex()].value.name)]",
+      "properties": {
+        "addressPrefix": "[items(parameters('accsubnets'))[copyIndex()].value.subnetPrefix]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', items(parameters('vnetName'))[1].value.name)]"
+      ]
+    }
+  ]
+}
